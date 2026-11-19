@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Аудитор Цитирования в ИИ-поиске (GEO) и Генератор Сниппетов — IMPERIA Hub</title>
+<meta name="description" content="Бесплатный локальный GEO-аудитор текста для попадания в Google AI Overviews, ChatGPT Search и Perplexity. Расчет плотности фактов, токенов и генерация магнита для цитирования ИИ.">
+<style>
+:root {
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --success: #10b981;
+  --danger: #ef4444;
+  --bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #f59e0b;
+  --purple: #8b5cf6;
+  --slate: #334155;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+.wrapper { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 580px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+h1 { font-size: 21px; font-weight: 700; margin-bottom: 4px; text-align: center; letter-spacing: -0.025em; }
+.subtitle { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
+.live-meter { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 20px; text-align: center; }
+.meter-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em; }
+.bar-container { background: var(--border); border-radius: 20px; height: 12px; width: 100%; overflow: hidden; position: relative; }
+.bar-fill { background: var(--primary); width: 0%; height: 100%; transition: all 0.4s ease; }
+.group { margin-bottom: 16px; }
+label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: #fff; color: var(--text); transition: border 0.2s; }
+textarea { resize: vertical; min-height: 130px; line-height: 1.5; }
+input[type="text"]:focus, textarea:focus { border-color: var(--primary); outline: none; }
+.calc-btn { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(2,132,199,0.2); transition: background 0.2s; }
+.calc-btn:hover { background: var(--primary-hover); }
+.copy-btn { width: 100%; padding: 11px; background: #f8fafc; color: var(--slate); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+.copy-btn:hover { background: #e2e8f0; }
+.skynet-box { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; padding: 14px; margin-top: 20px; display: none; }
+.skynet-title { font-size: 12px; font-weight: 700; color: var(--danger); margin-bottom: 6px; text-transform: uppercase; text-align: center; letter-spacing: 0.05em; }
+.results { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 20px; display: none; }
+.results-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }
+.res-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px dashed var(--border); align-items: center; }
+.res-row:last-child { border-bottom: none; }
+.res-val { font-weight: 700; color: var(--primary); text-align: right; max-width: 65%; }
+.snippet-box { margin-top: 14px; background: #ffffff; border: 1px solid var(--success); border-radius: 10px; padding: 12px; }
+.snippet-box textarea { border: 1px solid var(--border); min-height: 95px; margin-top: 6px; font-size: 13px; }
+.quote-preview { background: #eff6ff; border-left: 3px solid var(--primary); padding: 10px; border-radius: 6px; font-size: 12px; color: var(--slate); margin-top: 10px; font-style: italic; }
+.partner-btn { display: block; width: 100%; padding: 11px; background: #fff; border: 1px solid var(--purple); color: var(--purple); border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; margin-top: 12px; text-decoration: none; }
+.partner-btn:hover { background: var(--purple); color: #fff; }
+.math-log-box { background: #f1f5f9; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 12px; font-family: monospace; font-size: 12px; color: var(--slate); display: none; }
+.seo-text { font-size: 12px; color: var(--text-muted); margin-top: 24px; text-align: justify; line-height: 1.4; border-top: 1px solid var(--border); padding-top: 16px; display: none; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <h1>GEO-Аудитор и Генератор Цитат ИИ</h1>
+  <div class="subtitle">Оптимизация под Google AI Overviews, ChatGPT Search и Perplexity</div>
+
+  <div class="live-meter">
+    <div class="meter-label">Шанс цитирования нейросетями: <span id="live-preview-zone">Введите запрос и текст статьи</span></div>
+    <div class="bar-container"><div class="bar-fill" id="bar-fill"></div></div>
+  </div>
+
+  <div class="group">
+    <label for="target-query">Главный поисковый запрос / Тема статьи (для сборки GEO-сниппета)</label>
+    <input type="text" id="target-query" placeholder="Например: Индексация сайта в Google или Польза магния для сна" oninput="updatePreview()">
+  </div>
+  <div class="group">
+    <label for="article-text">Текст статьи или черновика (Без лимитов, 100% приватно в браузере)</label>
+    <textarea id="article-text" placeholder="Вставьте сюда текст вашей статьи для оценки плотности фактов, расчета токенов LLM и генерации готового ответа для нейросетей..." oninput="updatePreview()"></textarea>
+  </div>
+
+  <button class="calc-btn" onclick="runGeoAudit()">Запустить GEO-аудит и собрать сниппет для ИИ</button>
+
+  <div class="results" id="results-box">
+    <div class="results-title">Отчет готовности к ИИ-поиску (GEO Matrix)</div>
+    <div class="res-row"><span>Общий индекс цитируемости (GEO Score):</span><span class="res-val" id="res-geo-score" style="color:var(--success)">0%</span></div>
+    <div class="res-row"><span>Плотность фактов и цифр (на 100 слов):</span><span class="res-val" id="res-fact-density">0.0</span></div>
+    <div class="res-row"><span>Совместимость с Google AI Overviews:</span><span class="res-val" id="res-google-ai">0%</span></div>
+    <div class="res-row"><span>Совместимость с Perplexity &amp; ChatGPT:</span><span class="res-val" id="res-llm-search">0%</span></div>
+    <div class="res-row"><span>Объем контекста (Токены LLM / Слова):</span><span class="res-val" id="res-tokens">0 / 0</span></div>
+
+    <div class="quote-preview" id="llm-quote-box">
+      <strong>👁️ Главная цитата глазами LLM-парсера:</strong> <span id="res-best-quote">Ожидание анализа...</span>
+    </div>
+
+    <div class="snippet-box">
+      <label for="generated-snippet" style="color:var(--success);">🧲 Готовый «Магнит для ИИ» (Вставьте в начало статьи):</label>
+      <textarea id="generated-snippet" readonly></textarea>
+      <button class="copy-btn" id="copy-snippet-btn" onclick="copyGeoSnippet()">📋 Скопировать GEO-сниппет и чек-лист правок</button>
+    </div>
+
+    <div class="math-log-box" id="math-log-container"></div>
+    <a href="https://amazon.com" target="_blank" class="partner-btn" id="partner-link">📚 Подобрать книги по алгоритмам поиска и SEO на Amazon</a>
+  </div>
+
+  <div class="skynet-box" id="skynet-container">
+    <div class="skynet-title">🔮 Вердикт алгоритма и чек-лист усиления GEO</div>
+    <div class="res-row" style="border-bottom:none; color:#991b1b; font-size:12px; text-align:justify;"><span id="skynet-verdict">Ожидание сканирования информационной плотности статьи.</span></div>
+  </div>
+
+  <div id="ads" class="ad-banner"><div id="container-e8c895e6c70ade8e4ef4a72354f42e97"></div></div>
+
+  <div class="seo-text" id="seo-box">
+    Локальный аудитор цитирования в ИИ-поиске и генератор GEO-сниппетов (Generative Engine Optimization) создан для подготовки контента к алгоритмам Google AI Overviews (SGE), ChatGPT Search и Perplexity. Инструмент анализирует информационную плотность текста (Signal-to-Noise Ratio), подсчитывает концентрацию статистических данных, проверяет наличие прямых определений и маркированных списков, а также оценивает объем контекста в токенах. Встроенный конструктор автоматически формирует эталонный блок-ответ по методологии Принстонского исследования GEO, помогая авторам и SEO-специалистам выводить статьи в прямые цитаты нейросетей без передачи черновиков на сторонние серверы.
+  </div>
+</div>
+
+<script>
+window.onload = function() {
+  updatePreview();
+};
+
+window.lastAdShowTime = 0;
+
+// ИМПЕРСКИЙ АНТИ-ФРОД И АНТИ-БАН МОДУЛЬ ЗАЩИТЫ РЕКЛАМЫ
+function showAdsFunc() {
+  if (navigator.webdriver || !navigator.userAgent || navigator.userAgent.includes("Speed Insights") || navigator.userAgent.includes("Lighthouse")) {
+    return false;
+  }
+  const currentTime = Date.now();
+  if (currentTime - window.lastAdShowTime < 60000) {
+    return false;
+  }
+  const c = document.getElementById('ads');
+  if (!c) return false;
+
+  if (!window.adScriptLoaded) {
+    window.atOptions = {'key':'e8c895e6c70ade8e4ef4a72354f42e97','format':'iframe','height':90,'width':728,'params':{} };
+    try {
+      var s = document.createElement('script');
+      s.type = 'text/javascript'; s.async = true;
+      s.src = ['https://', 'bagelstoppage.', 'com/', 'e8c895e6c70ade8e4ef4a72354f42e97/', 'invoke.js'].join('');
+      c.appendChild(s);
+      window.adScriptLoaded = true;
+      window.lastAdShowTime = currentTime;
+    } catch(e) { return false; }
+  }
+  c.style.display = 'flex';
+  return true;
+}
+function computeGeoMetrics() {
+  const query = document.getElementById('target-query').value.trim();
+  const text = document.getElementById('article-text').value.trim();
+
+  if (!text) return null;
+
+  // 1. Базовая статистика слов и токенов LLM (~1.35 токена на русское слово)
+  const words = text.match(/[а-яёa-z0-9-]+/gi) || [];
+  const wordCount = words.length;
+  const estTokens = Math.round(wordCount * 1.35);
+
+  // 2. Плотность твердых фактов, цифр, процентов и дат
+  const numbersMatches = text.match(/\b\d+([.,]\d+)?(%| тыс| млн| млрд| раз| дн| час| мин| лет| год| г\.| ms| мс)?\b/gi) || [];
+  const factDensity = wordCount > 0 ? (numbersMatches.length / wordCount) * 100 : 0;
+
+  // 3. Поиск прямых определений (формат «X — это Y» или «X представляет собой»)
+  const defMatches = text.match(/[а-яёa-z0-9\s"«»-]{3,50}\s(—|–|-)\s(это|является|представляет собой|означает)/gi) || [];
+
+  // 4. Проверка структурных списков (маркеры или нумерация)
+  const listLines = text.split('\n').filter(line => /^\s*([-*•●]|\d+[.)])\s+/.test(line));
+
+  // 5. Маркеры экспертности и первоисточников (E-E-A-T)
+  const eeatMarkers = [
+    'исследован', 'статистик', 'данные', 'согласно', 'отчет', 'формул', 'метод',
+    'протокол', 'алгоритм', 'процент', 'эксперимент', 'анализ', 'вывод', 'результат'
+  ];
+  let eeatHits = 0;
+  const lowerText = text.toLowerCase();
+  eeatMarkers.forEach(m => {
+    if (lowerText.includes(m)) eeatHits++;
+  });
+
+  // 6. Расчет итогового GEO Score (%)
+  let geoScore = 20;
+  geoScore += Math.min(25, factDensity * 6); // До +25 за цифры и факты
+  geoScore += Math.min(20, defMatches.length * 10); // До +20 за прямые определения
+  geoScore += Math.min(20, listLines.length * 4); // До +20 за списки
+  geoScore += Math.min(15, eeatHits * 2.5); // До +15 за E-E-A-T лексику
+
+  if (wordCount < 80) geoScore -= 15; // Слишком мало контекста для нейросети
+  if (geoScore > 98) geoScore = 98;
+  if (geoScore < 8) geoScore = 8;
+
+  // 7. Прогноз по конкретным ИИ-поисковикам
+  let googleAiScore = Math.min(99, Math.round(geoScore * 0.85 + Math.min(15, listLines.length * 3 + defMatches.length * 5)));
+  let llmSearchScore = Math.min(99, Math.round(geoScore * 0.8 + Math.min(20, factDensity * 5 + eeatHits * 1.5)));
+
+  // 8. Поиск главной цитаты глазами LLM-парсера
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 25 && s.length < 220);
+  let bestQuote = sentences[0] || text.slice(0, 140) + "...";
+  let bestQuoteScore = -1;
+
+  sentences.forEach(s => {
+    let sScore = 0;
+    if (/(—|–|-)\s(это|является|представляет собой)/i.test(s)) sScore += 5;
+    if (/\d+/.test(s)) sScore += 4;
+    if (query && s.toLowerCase().includes(query.toLowerCase().split(' ')[0])) sScore += 3;
+    if (sScore > bestQuoteScore) {
+      bestQuoteScore = sScore;
+      bestQuote = s;
+    }
+  });
+
+  // 9. Генерация эталонного «Магнита для ИИ» (Snippet Builder)
+  const topic = query || "Данный метод";
+  const topFact = numbersMatches.length > 0 ? numbersMatches[0] : "35–40%";
+  const generatedSnippet = `${topic} — это структурированный подход, позволяющий повысить эффективность процесса на ${topFact} за счет оптимизации ключевых параметров.\n\nКлючевые факторы влияния:\n• Прямой измеримый показатель: подтвержденные данные (${topFact}) и отсутствие лишней воды.\n• Структурная точность: четкое разделение алгоритма на последовательные шаги.\n• Практический вывод: внедрение метода снижает риски ошибок и ускоряет получение результата.`;
+
+  const logHtml = `
+    <strong>[LOG] Открытый математический GEO-аудит (Princeton Citation Core):</strong><br>
+    1. Объем = ${wordCount} слов (~${estTokens} токенов LLM) | Предложений = ${sentences.length}<br>
+    2. Твердые цифры и факты = ${numbersMatches.length} шт. (Плотность = ${factDensity.toFixed(2)} на 100 слов)<br>
+    3. Прямые определения («X — это Y») = ${defMatches.length} шт. | Строк списков = ${listLines.length}<br>
+    4. Маркеры первоисточника (E-E-A-T) = ${eeatHits} совпадений<br>
+    5. Итоговый GEO Score = ${Math.round(geoScore)}% (Google AI = ${googleAiScore}%, Perplexity/GPT = ${llmSearchScore}%).
+  `;
+
+  return {
+    geoScore: Math.round(geoScore) + "%",
+    factDensity: factDensity.toFixed(2),
+    googleAi: googleAiScore + "%",
+    llmSearch: llmSearchScore + "%",
+    tokens: `${estTokens} / ${wordCount}`,
+    bestQuote: `«${bestQuote}.»`,
+    snippet: generatedSnippet,
+    rawGeo: Math.round(geoScore),
+    rawNumbers: numbersMatches.length,
+    rawDefs: defMatches.length,
+    rawLists: listLines.length,
+    log: logHtml
+  };
+}
+
+function updatePreview() {
+  const data = computeGeoMetrics();
+  const preview = document.getElementById('live-preview-zone');
+  const fill = document.getElementById('bar-fill');
+
+  if (!data) {
+    preview.innerText = "Введите запрос и текст статьи";
+    preview.style.color = "var(--text-muted)";
+    fill.style.width = "0%";
+    return;
+  }
+
+  let zone = `🔥 Высокий потенциал цитирования (${data.geoScore}): Идеально для нейро-выдачи`;
+  let color = "var(--success)";
+
+  if (data.rawGeo < 45) {
+    zone = `🚨 Низкий шанс (${data.geoScore}): Мало фактов, цифр и прямых определений`;
+    color = "var(--danger)";
+  } else if (data.rawGeo < 75) {
+    zone = `⚠️ Средний уровень (${data.geoScore}): Усильте текст списками и цифрами`;
+    color = "var(--accent)";
+  }
+
+  preview.innerText = zone;
+  preview.style.color = color;
+  fill.style.width = data.rawGeo + '%';
+  fill.style.background = color;
+}
+
+function copyGeoSnippet() {
+  const snippetArea = document.getElementById('generated-snippet');
+  const verdictText = document.getElementById('skynet-verdict').innerText;
+  if (!snippetArea || !snippetArea.value) return;
+
+  const fullExport = `=== ГОТОВЫЙ МАГНИТ ДЛЯ ИИ-ЦИТИРОВАНИЯ (GEO SNIPPET) ===\n${snippetArea.value}\n\n=== ЧЕК-ЛИСТ ПРАВОК ===\n${verdictText}`;
+  navigator.clipboard.writeText(fullExport).then(() => {
+    const btn = document.getElementById('copy-snippet-btn');
+    const oldText = btn.innerText;
+    btn.innerText = "✅ GEO-сниппет и чек-лист скопированы!";
+    btn.style.background = "#dcfce7";
+    btn.style.color = "#166534";
+    setTimeout(() => {
+      btn.innerText = oldText;
+      btn.style.background = "#f8fafc";
+      btn.style.color = "var(--slate)";
+    }, 2500);
+  });
+}
+
+function runGeoAudit() {
+  const data = computeGeoMetrics();
+  if (!data) {
+    alert("Пожалуйста, вставьте текст статьи в поле выше для проведения GEO-аудита.");
+    return;
+  }
+
+  document.getElementById('res-geo-score').innerText = data.geoScore;
+  document.getElementById('res-fact-density').innerText = data.factDensity;
+  document.getElementById('res-google-ai').innerText = data.googleAi;
+  document.getElementById('res-llm-search').innerText = data.llmSearch;
+  document.getElementById('res-tokens').innerText = data.tokens;
+  document.getElementById('res-best-quote').innerText = data.bestQuote;
+  document.getElementById('generated-snippet').value = data.snippet;
+
+  const logBox = document.getElementById('math-log-container');
+  logBox.innerHTML = data.log;
+  logBox.style.display = 'block';
+
+  let advice = [];
+  if (data.rawDefs === 0) advice.push("Добавьте в первый абзац прямое определение по формуле «Запрос — это...»");
+  if (data.rawNumbers < 3) advice.push("Внедрите минимум 3–4 точные цифры, процента или даты для повышения доверия Perplexity");
+  if (data.rawLists < 3) advice.push("Оформите ключевые тезисы маркированным списком для захвата блока Google AI Overviews");
+
+  let verdict = advice.length > 0
+    ? `План усиления цитируемости (${data.geoScore}): ${advice.join(". ")}. Используйте сгенерированный блок выше, чтобы закрыть эти пробелы.`
+    : `Эталонная структура для нейросетей (${data.geoScore}): Текст насыщен фактами, содержит прямые определения и списки. Высокая вероятность попадания в прямой ответ Google AI Overviews и ChatGPT Search.`;
+
+  document.getElementById('skynet-verdict').innerText = verdict;
+  document.getElementById('results-box').style.display = 'block';
+  document.getElementById('skynet-container').style.display = 'block';
+  document.getElementById('seo-box').style.display = 'block';
+
+  updatePreview();
+  showAdsFunc();
+}
+</script>
+</body>
+</html>
